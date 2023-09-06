@@ -1,7 +1,7 @@
 
 # Background
 
-There are a handful of things that I've been thinking about / playing with and they all kinda came together recently in a way that made sense to write up and share. 
+There are a handful of things that I've been thinking about / playing with, and they all kinda came together recently in a way that made sense to write up and share. 
 
 First, some background:
 
@@ -21,14 +21,13 @@ First, some background:
 
 [`dbt-duckdb`](https://github.com/jwills/dbt-duckdb) is a dbt adapter built for use with DuckDB (and also, recently MotherDuck) so we can configure OpenAlex as our source, and build a dbt project on top of it, allowing us to make use of all the great things about dbt like testing and macros and packages created by that community.
 
-
 ### Note
 
 Importantly: OpenAlex and MotherDuck both use s3 region `us-east-1` so the data won't be moving between regions. We can explore the OpenAlex snapshots directly from s3 using a local instance of `duckdb` and `dbt-duckdb` too; we'll just need to `set s3_region` in either to access the snapshot data files. 
 
+# Exploratory Analysis
 
-
-# 1. Get the OpenAlex author data snapshot file locations from the most recent manifest
+## 1. Get OpenAlex author data snapshot file locations from the most recent manifest
 
 ```
 import requests
@@ -45,7 +44,7 @@ for entry in manifest['entries']:
 print(len(files))
 ```
 
-# 2. Install `httpfs` and review snapshot data files using `duckdb`
+## 2. Install `httpfs` and review snapshot data files using `duckdb`
 
 ```
 import duckdb
@@ -57,12 +56,12 @@ duckdb.sql("select * from read_json_auto('https://openalex.s3.amazonaws.com/data
 
 In this example, `duckdb` read the compressed json file of 492 MB into an object in memory in about 10 seconds. 
 
-It's easy to see how we can iterate over the list of file paths from the manifest and use `duckdb`'s COPY or CREATE TABLE commands to insert these files into a persisted `.duckdb` database that we can store locally.
+It's easy to see how we can use a process like this to iterate over the list of file paths from the manifest and use `duckdb`'s COPY or CREATE TABLE commands to insert these files into a persisted `.duckdb` database that we can store locally.
 
 
-# 3. Explore a small sample of the records in these snapshot files to see how things are structured
+## 3. Explore a small sample of the records in these snapshot files to see how things are structured
 
-Let's limit the total number of records we're looking at just to understand how these files are 
+Let's limit the total number of records we're looking at just to understand how these files are structured.
 
 ```
 import duckdb
@@ -80,11 +79,11 @@ Index(['x_concepts', 'display_name_alternatives', 'cited_by_count',
 
 ```
 
-So in these compressed json files, we have an OpenAlex `id`, a `display_name` field, a `cited_by_count` field, a `most_cited_work` field, a few arrays (including `x_concepts`, `display_name_alternatives`, '`counts_by_year`) and some dict objects (like `last_known_institution`, `summary_stats`, and other `ids`). This helps us to understand how we might want to further explore.
+So in these compressed json files, we have an OpenAlex `id`, a `display_name` field, a `cited_by_count` field, a `most_cited_work` field, a few arrays (including `x_concepts`, `display_name_alternatives`, '`counts_by_year`) and some dict objects (like `last_known_institution`, `summary_stats`, and other `ids`). This helps us to understand how we might want to further explore or what's available in something like a more robust pipeline.
 
+# Moving into somewhat regular extraction
 
-
-# 4. Revise our queries to begin analysis
+## 4. Revise our queries to begin analysis
 
 Using this information, we can revise our `duckdb` queries to focus on fields that are most valuable to us in our analysis, and even start to unnest some of these arrays or dict objects, and start a process of transformation from the source snapshot files.
 
@@ -103,13 +102,11 @@ duckdb.sql("select id, display_name, json_extract(last_known_institution, '$.dis
 
 ```
 
-
-
-# 5. Create a `dbt` project from our analysis
+## 5. Create a `dbt` project from our analysis
 
 Using the above, we can build a `dbt` project that uses OpenAlex database snapshots as its source and to build specific tables to perform ongoing analysis and even output files, using `dbt-duckdb`. With `dbt-duckdb`, we can work with a persisted `.duckdb` database file, within memory, or with MotherDuck, which we'll get to. In our `profiles.yml`, we'll create a new profile with `type: duckdb` and configure any other `settings` we'll use. Then we can run `dbt init` to initialize the project 
 
-## Create `sources.yml`
+### Create `sources.yml`
 ```
 version: 2
 
@@ -121,7 +118,7 @@ sources:
       external_location: "read_json_auto('s3://openalex/data/authors/updated_date=2023-08-15/*.gz', format='newline_delimited', compression='gzip')"
 ```
 
-## Create models
+### Create models
 
 Like `stg_authors_cited`, `stg_authors_concepts_cited`
 
@@ -145,9 +142,6 @@ from read_json_auto('s3://openalex/data/authors/updated_date=2023-03-13/part_000
 Open Alex Snapshot files
 
 - JSON formatted, gzip compressed, s3 region 'us-east-1'
-
-
-
 
 
 Read files into `duckdb` to convert the json files to `csv` to be used as model sources for `dbt`.
