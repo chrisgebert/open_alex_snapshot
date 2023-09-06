@@ -12,4 +12,4 @@ share/
 .env
 open_alex_authors.duckdb
 open_alex.db
-pyvenv.cfgß
+pyvenv.cfg
