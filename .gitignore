@@ -1,0 +1,15 @@
+
+data/
+target/
+dbt_packages/
+logs/
+bin/
+include/
+lib/
+logs/
+share/
+
+.env
+open_alex_authors.duckdb
+open_alex.db
+pyvenv.cfgß
