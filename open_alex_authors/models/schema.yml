@@ -1,0 +1,9 @@
+
+version: 2
+
+models:
+  - name: stg_authors_cited
+    description: "author records with 1 or more citations"
+
+  - name: stg_authors_concepts_cited
+    description: "top level concepts from cited author records"
