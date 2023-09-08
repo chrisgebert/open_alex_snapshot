@@ -8,9 +8,4 @@ sources:
     meta:
       external_location: "read_json_auto('s3://openalex/data/authors/updated_date=2023-08-15/*.gz', format='newline_delimited', compression='gzip')"
     tables:
-      - name: authors
-      - name: authors_concepts
-      - name: authors_counts_by_year
-      - name: authors_ids
-
-
+      - name: snapshot

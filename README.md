@@ -1,4 +1,13 @@
 
+- About This Project
+- Exploratory Analysis
+- Develop Our Analysis
+- Using `dbt` and `dbt-duckdb`
+- Using MotherDuck
+- Read More
+
+
+
 # About This Project
 
 First, a little background:
@@ -121,6 +130,8 @@ Or even getting the `display_name` of the `last_known_institution` dict.
 duckdb.sql("select id, display_name, json_extract(last_known_institution, '$.display_name'), works_count, cited_by_count from read_json_auto('https://openalex.s3.amazonaws.com/data/authors/updated_date%3D2023-08-15/part_000.gz', format='newline_delimited', compression='gzip') where cited_by_count > 10")
 ```
 
+# Using `dbt` and `dbt-duck`
+
 ## 5. Create a `dbt` project from our analysis
 
 Once we have suitably developed the queries we're interested in tracking from snapshot to snapshot, we can build a `dbt` project that uses OpenAlex database snapshots as a source to build specific tables to perform ongoing analysis and even output files, using `dbt-duckdb`.
@@ -155,6 +166,8 @@ sources:
     description: "Latest OpenAlex author data snapshot"
     meta:
       external_location: "read_json_auto('s3://openalex/data/authors/updated_date=2023-08-15/*.gz', format='newline_delimited', compression='gzip')"
+    tables:
+      - name: snapshot
 ```
 
 #### Create models
@@ -171,7 +184,7 @@ Like stage models (e.g `stg_authors_cited.sql` or `stg_authors_concepts_cited.sq
 
 - Authenticating to MotherDuck: https://motherduck.com/docs/getting-started/connect-query-from-python/installation-authentication/
 
-- MotherDuck + DBT: Better Together: https://motherduck.com/blog/motherduck-duckdb-dbt/
+- MotherDuck + dbt: Better Together: https://motherduck.com/blog/motherduck-duckdb-dbt/
 
 - Using MotherDuck with `dbt-duckdb`: https://github.com/jwills/dbt-duckdb#using-motherduck
 

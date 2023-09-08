@@ -5,7 +5,7 @@ with extract as (
     select 
         author_id, 
         unnest(x_concepts, recursive := true) 
-    from {{ source('open_alex_authors', 'authors_concepts') }}
+    from {{ source('open_alex_authors', 'snapshot') }}
 )
 
 select * 
