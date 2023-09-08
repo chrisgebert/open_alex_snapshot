@@ -4,7 +4,7 @@ open_alex_authors:
   outputs:
     dev:
       type: duckdb
-      path: 'open_alex.duckdb'
+      path: 'open_alex_authors.duckdb'
       threads: 24
       extensions:
         - httpfs

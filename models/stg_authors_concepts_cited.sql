@@ -3,7 +3,7 @@
 
 with extract as (
     select 
-        author_id, 
+        id as author_id, 
         unnest(x_concepts, recursive := true) 
     from {{ source('open_alex_authors', 'snapshot') }}
 )
