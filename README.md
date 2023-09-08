@@ -101,7 +101,7 @@ So in these compressed json files, we have:
 - a `display_name` field,
 - a `cited_by_count` field,
 - a `most_cited_work` field,
-- a few arrays (including `x_concepts`, `display_name_alternatives`, '`counts_by_year`) and
+- a few arrays (including `x_concepts`, `display_name_alternatives`, `counts_by_year`) and
 - some dict objects (like `last_known_institution`, `summary_stats`, and other `ids`).
 
 This helps us to understand what options we have regarding further exploration in a single snapshot instance, or if we're interested how things change from one snapshot filt to the next over time.
