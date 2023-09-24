@@ -4,4 +4,4 @@
 select
     id as author_id,
     unnest(counts_by_year, recursive := true)
-from {{ source('open_alex_authors', 'snapshot') }}
+from {{ source('open_alex_authors', 'september_2023_snapshot') }}

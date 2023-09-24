@@ -5,7 +5,6 @@ sources:
   - name: open_alex_authors
     schema: main
     description: "Latest OpenAlex author data snapshot"
-    meta:
-      external_location: "read_json_auto('s3://openalex/data/authors/updated_date=2023-08-15/*.gz', format='newline_delimited', compression='gzip')"
     tables:
-      - name: snapshot
+      - name: september_2023_snapshot
+  
