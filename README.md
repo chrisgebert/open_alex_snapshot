@@ -2,6 +2,7 @@
 
 - [About This Project](#about-this-project)
 - [Exploratory Analysis](#exploratory-analysis)
+- [Loading Snapshot Files into a Local DuckDB Database](#loading-snapshot-files-into-a-local-duckdb-database)
 - [Develop Our Analysis](#develop-our-analysis)
 - [Using `dbt` and `dbt-duckdb`](#using-dbt-and-dbt-duck)
 - [Using MotherDuck](#using-motherduck)
@@ -139,7 +140,7 @@ aws s3 ls --summarize --human-readable --no-sign-request --recursive "s3://opena
 aws s3 sync --delete "s3://openalex/data/authors/" "data/authors/" --no-sign-request
 ```
 
-# Loading snapshot data into local DuckDB database
+# Loading Snapshot Files into a Local DuckDB Database
 
 We can make use of DuckDB's [COPY](https://duckdb.org/docs/sql/statements/copy.html) or [CREATE TABLE](https://duckdb.org/docs/sql/statements/create_table) commands to insert these downloaded files into a persisted `.duckdb` database that we store locally. Which looks like this when using the DuckDB CLI:
 
@@ -318,7 +319,7 @@ CREATE OR REPLACE DATABASE open_alex_authors FROM 'open_alex_authors.duckdb';
 
 ### Add MotherDuck profile to dbt
 
-Or if only the snapshot table exists in MotherDuck, we can run our `dbt-duckdb` models against that source, using the MotherDuck profile in the `profiles.yml` file.
+Or if only the snapshot table exists in MotherDuck, we can run our `dbt-duckdb` models against that source, by addng a MotherDuck target (i.e. the `prod` target) in the `profiles.yml` file.
 
 ```yaml
 open_alex_authors:
