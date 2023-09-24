@@ -5,6 +5,7 @@
 - [Develop Our Analysis](#develop-our-analysis)
 - [Using `dbt` and `dbt-duckdb`](#using-dbt-and-dbt-duck)
 - [Using MotherDuck](#using-motherduck)
+- [Next Steps](#next-steps)
 - [Read More](#read-more)
 
 # About This Project
@@ -140,12 +141,17 @@ aws s3 sync --delete "s3://openalex/data/authors/" "data/authors/" --no-sign-req
 
 # Loading snapshot data into local DuckDB database
 
-We can make use of DuckDB's [COPY](https://duckdb.org/docs/sql/statements/copy.html) or [CREATE TABLE](https://duckdb.org/docs/sql/statements/create_table) commands to insert these downloaded files into a persisted `.duckdb` database that we store locally. Like this when using the DuckDB CLI:
+We can make use of DuckDB's [COPY](https://duckdb.org/docs/sql/statements/copy.html) or [CREATE TABLE](https://duckdb.org/docs/sql/statements/create_table) commands to insert these downloaded files into a persisted `.duckdb` database that we store locally. Which looks like this when using the DuckDB CLI:
 
 ```sql
 duckdb open_alex_authors.duckdb
 
-select count(*) from read_json_auto('~/open_alex_authors/data/authors/*/*.gz', format='newline_delimited', compression='gzip');
+select count(*)
+from read_json_auto(
+  '~/open_alex_authors/data/authors/*/*.gz',
+  format='newline_delimited',
+  compression='gzip'
+);
 ```
 
 <details>
@@ -166,7 +172,12 @@ Query Result
 </details>
 
 ```sql
-create table september_2023_snapshot from read_json_auto('~/open_alex_authors/data/authors/*/*.gz', format='newline_delimited', compression='gzip');
+create table september_2023_snapshot
+from read_json_auto(
+  '~/open_alex_authors/data/authors/*/*.gz',
+  format='newline_delimited',
+  compression='gzip'
+);
 ```
 
 The benefit of loading the data into the database using DuckDB at this step is that we can bypass the need to run python scripts to flatten the compressed json source files into CSVs. We can unnest the nested JSON fields later if we decide those are valuable to our analysis, but this method will better mirror the data as it existed at the time of its extraction in its original form and may even allow us to start diving into the specifics of the snapshot sooner.
@@ -180,19 +191,32 @@ Let's say we'd like to focus only on those authors who have been cited. (Nothing
 We could define a stage table of those `author_ids` like this:
 
 ```sql
-select id as author_id from september_2023_snapshot where cited_by_count != 0;
+select
+  id as author_id
+from september_2023_snapshot
+where cited_by_count != 0;
 ```
 
 Or let's say we want to start unnesting the `counts_by_year` array to get discrete citation counts for a particular year.
 
 ```sql
-select id as author_id, unnest(counts_by_year, recursive := true) from september_2023_snapshot;
+select
+  id as author_id,
+  unnest(counts_by_year, recursive := true)
+from september_2023_snapshot;
 ```
 
 Or extracting the `display_name` of the `last_known_institution` dict.
 
 ```sql
-select id as author_id, display_name, json_extract(last_known_institution, '$.display_name'), works_count, cited_by_count from september_2023_snapshot where cited_by_count > 10;
+select
+  id as author_id,
+  display_name, 
+  json_extract(last_known_institution, '$.display_name'),
+  works_count, 
+  cited_by_count
+from september_2023_snapshot
+where cited_by_count > 10;
 ```
 
 # Using `dbt` and `dbt-duck`
@@ -314,13 +338,13 @@ open_alex_authors:
 
 ### Other options
 
-Depending on whether you're looking to sync files locally at all, you can alternatively decide to [query and store the OpenAlex files directly from s3](https://motherduck.com/docs/key-tasks/querying-s3-files). Because both OpenAlex and MotherDuck exisst in s3 region `us-east-1`, you could choose to use the OpenAlex s3 snapshot location as a source to create a MotherDuck database share or generate output files without relying on local storage at all. 
+Depending on whether you're looking to sync files locally at all, you could decide to [query and store the OpenAlex files directly from s3](https://motherduck.com/docs/key-tasks/querying-s3-files). Because both OpenAlex and MotherDuck exist in s3 region `us-east-1`, you could choose to use the OpenAlex s3 snapshot location as a source to run your `dbt-duckdb` models and create a MotherDuck database share or generate output files without relying on local storage at all. 
 
 I haven't tested that much and the [cold storage fees](https://motherduck.com/pricing/) may mean storing multiple full snapshots would grow to be prohibitively expensive over time for a hobby project. But that could be mitigated with local storage since MotherDuck will [run hybrid queries](https://motherduck.com/docs/key-tasks/running-hybrid-queries) from the CLI, combining local storage with what exists in the cloud, or only persisting certain aggregations from each snapshot.
 
 ## Creating a Share
 
-Once the database is created in MotherDuck, we can also choose to [share the database](https://motherduck.com/docs/key-tasks/managing-shared-motherduck-database/). 
+Once the database is created in MotherDuck, we can also choose to [share the database](https://motherduck.com/docs/key-tasks/managing-shared-motherduck-database/), including the base snapshot table and other models we created from it. 
 
 ```sql
 CREATE SHARE open_alex_authors_share FROM open_alex_authors
