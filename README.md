@@ -304,7 +304,7 @@ dbt run --select stg_authors_cited stg_authors_concepts_cited stg_counts_by_year
 
 ### Create outputs
 
-From these models, we can begin to output files (using `dbt-duckdb`'s functionality to [write to external files](https://github.com/duckdb/dbt-duckdb#writing-to-external-files)), or [export the data to parquet]() or another compressed format, or begin to use a BI tool like [Evidence.dev](https://evidence.dev/) to generate reports that will produce analysis about specific parts of the most recent OpenAlex snapshot. 
+From these models, we can begin to output files (using `dbt-duckdb`'s functionality to [write to external files](https://github.com/duckdb/dbt-duckdb#writing-to-external-files)), or [export the data to parquet](https://duckdb.org/docs/guides/import/parquet_export) or another compressed format, or begin to use a BI tool like [Evidence.dev](https://evidence.dev/) to generate reports that will produce analysis about specific parts of the most recent OpenAlex snapshot. 
 
 # Using MotherDuck
 
