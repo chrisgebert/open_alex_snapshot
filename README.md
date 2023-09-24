@@ -1,10 +1,11 @@
+# Contents
 
-- About This Project
-- Exploratory Analysis
-- Develop Our Analysis
-- Using `dbt` and `dbt-duckdb`
-- Using MotherDuck
-- Read More
+- [About This Project](#about-this-project)
+- [Exploratory Analysis](#exploratory-analysis)
+- [Develop Our Analysis](#develop-our-analysis)
+- [Using `dbt` and `dbt-duckdb`](#using-dbt-and-dbt-duck)
+- [Using MotherDuck](#using-motherduck)
+- [Read More](#read-more)
 
 # About This Project
 
@@ -131,7 +132,7 @@ This helps us understand what's available in further exploration in a single sna
 
 From here, it's simplest to follow the [OpenAlex documentation](https://docs.openalex.org/download-all-data/download-to-your-machine) and use the `aws cli` commands to sync all the author snapshot files to a local directory, which were about 28GB and 105 files total in the latest snapshot. 
 
-```
+```sh
 aws s3 ls --summarize --human-readable --no-sign-request --recursive "s3://openalex/data/authors/"
 
 aws s3 sync --delete "s3://openalex/data/authors/" "data/authors/" --no-sign-request
@@ -141,7 +142,7 @@ aws s3 sync --delete "s3://openalex/data/authors/" "data/authors/" --no-sign-req
 
 We can make use of DuckDB's [COPY](https://duckdb.org/docs/sql/statements/copy.html) or [CREATE TABLE](https://duckdb.org/docs/sql/statements/create_table) commands to insert these downloaded files into a persisted `.duckdb` database that we store locally. Like this when using the DuckDB CLI:
 
-```sh
+```sql
 duckdb open_alex_authors.duckdb
 
 select count(*) from read_json_auto('~/open_alex_authors/data/authors/*/*.gz', format='newline_delimited', compression='gzip');
@@ -164,7 +165,7 @@ Query Result
 ```
 </details>
 
-```sh
+```sql
 create table september_2023_snapshot from read_json_auto('~/open_alex_authors/data/authors/*/*.gz', format='newline_delimited', compression='gzip');
 ```
 
@@ -178,19 +179,19 @@ Let's say we'd like to focus only on those authors who have been cited. (Nothing
 
 We could define a stage table of those `author_ids` like this:
 
-```sh
+```sql
 select id as author_id from september_2023_snapshot where cited_by_count != 0;
 ```
 
 Or let's say we want to start unnesting the `counts_by_year` array to get discrete citation counts for a particular year.
 
-```sh
+```sql
 select id as author_id, unnest(counts_by_year, recursive := true) from september_2023_snapshot;
 ```
 
 Or extracting the `display_name` of the `last_known_institution` dict.
 
-```sh
+```sql
 select id as author_id, display_name, json_extract(last_known_institution, '$.display_name'), works_count, cited_by_count from september_2023_snapshot where cited_by_count > 10;
 ```
 
@@ -249,7 +250,7 @@ dbt run --select stg_authors_cited stg_authors_concepts_cited stg_counts_by_year
 
 </summary>
 
-```sh
+```
 (open_alex_authors) M20 :: projects/open_alex_authors » dbt run --select stg_authors_cited stg_authors_concepts_cited stg_counts_by_year number_of_authors
 01:20:20  Running with dbt=1.5.2
 01:20:21  Registered adapter: duckdb=1.5.2
@@ -284,16 +285,16 @@ From these models, we can begin to output files (using `dbt-duckdb`'s functional
 
 At this point, we'll connect to a MotherDuck account and create the database there that already exists locally:
 
-## Uploading data
+## Creating the local database in MotherDuck
 
-```sh
+```sql
 .open md:
 CREATE OR REPLACE DATABASE open_alex_authors FROM 'open_alex_authors.duckdb';
 ```
 
-Depending on whether you're looking to sync files locally at all, you can alternatively decide to [query and store the OpenAlex files directly from s3](https://motherduck.com/docs/key-tasks/querying-s3-files). Because both OpenAlex and MotherDuck exisst in s3 region `us-east-1`, you could choose to use the OpenAlex s3 snapshot location as a source to create a MotherDuck database share or generate output files without relying on local storage at all.  
+### Add MotherDuck profile to dbt
 
-### Add MotherDuck profile
+Or if only the snapshot table exists in MotherDuck, we can run our `dbt-duckdb` models against that source, using the MotherDuck profile in the `profiles.yml` file.
 
 ```yaml
 open_alex_authors:
@@ -311,19 +312,29 @@ open_alex_authors:
       path: md:open_alex_authors
 ```
 
-I haven't tested that much and the [cold storage fees](https://motherduck.com/pricing/) may grow to be prohibitively expensive for a hobby project storing 25-30 GBs each month. But that could be mitigated with local storage, or only persisting certain aggregations from each snapshot.
+### Other options
+
+Depending on whether you're looking to sync files locally at all, you can alternatively decide to [query and store the OpenAlex files directly from s3](https://motherduck.com/docs/key-tasks/querying-s3-files). Because both OpenAlex and MotherDuck exisst in s3 region `us-east-1`, you could choose to use the OpenAlex s3 snapshot location as a source to create a MotherDuck database share or generate output files without relying on local storage at all. 
+
+I haven't tested that much and the [cold storage fees](https://motherduck.com/pricing/) may mean storing multiple full snapshots would grow to be prohibitively expensive over time for a hobby project. But that could be mitigated with local storage since MotherDuck will [run hybrid queries](https://motherduck.com/docs/key-tasks/running-hybrid-queries) from the CLI, combining local storage with what exists in the cloud, or only persisting certain aggregations from each snapshot.
 
 ## Creating a Share
 
-```sh
+Once the database is created in MotherDuck, we can also choose to [share the database](https://motherduck.com/docs/key-tasks/managing-shared-motherduck-database/). 
+
+```sql
 CREATE SHARE open_alex_authors_share FROM open_alex_authors
 ```
 
+So, others can attach and [query the database share](https://motherduck.com/docs/key-tasks/querying-a-shared-motherduck-database).
 
+```sql
+ATTACH 'md:_share/open_alex_authors/5d0ef4a6-8f80-4c74-b821-08fda756ca2d'
+```
 
 # Next Steps
 
-From here, since different disciplines are cited at different rates, it'd make sense to start parsing the `x_concepts` fields to explore which authors and which institutions are most highly cited within a given [concept](https://docs.openalex.org/api-entities/concepts/concept-object) so we can begin to track how those top percentages change over time from snapshot to snapshot.
+From here, since different disciplines are cited at different rates, it'd make sense to start parsing the `x_concepts` fields to explore which authors and which institutions are most highly cited within a given [concept](https://docs.openalex.org/api-entities/concepts/concept-object) so we can begin to track how those within top percentages change over time from snapshot to snapshot.
 
 # Read More:
 

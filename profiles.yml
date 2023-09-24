@@ -8,3 +8,6 @@ open_alex_authors:
       threads: 24
       extensions:
         - httpfs
+    prod:
+      type: duckdb
+      path: "md:open_alex_authors"

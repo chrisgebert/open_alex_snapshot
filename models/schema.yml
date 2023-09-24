@@ -7,3 +7,9 @@ models:
 
   - name: stg_authors_concepts_cited
     description: "top level concepts from cited author records"
+
+  - name: stg_counts_by_year
+    description: "unnested author citation counts by year"
+
+  - name: number_of_authors
+    description: "distinct number of authors from each year"
