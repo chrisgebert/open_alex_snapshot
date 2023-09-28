@@ -127,7 +127,7 @@ So in these compressed json files, we have:
 - a `display_name` field,
 - a `cited_by_count` field,
 - a `most_cited_work` field,
-- a few arrays (including `x_concepts`, `display_name_alternatives`, '`counts_by_year`) and
+- a few arrays (including `x_concepts`, `display_name_alternatives`, `counts_by_year`) and
 - some dict objects (like `last_known_institution`, `summary_stats`, and other `ids`).
 
 This helps us understand what's available in further exploration in a single snapshot instance, or if we're interested how things change from one snapshot file to the next over time.
@@ -220,7 +220,7 @@ from september_2023_snapshot
 where cited_by_count > 10;
 ```
 
-# Using `dbt` and `dbt-duck`
+# Using `dbt` and `dbt-duckdb`
 
 ## Create a `dbt` project from our analysis
 
