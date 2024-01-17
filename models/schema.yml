@@ -2,14 +2,11 @@
 version: 2
 
 models:
-  - name: stg_authors_cited
-    description: "author records with 1 or more citations"
+  - name: authors
+    description: "author records"
 
-  - name: stg_authors_concepts_cited
-    description: "top level concepts from cited author records"
+  - name: author_ids
+    description: "author ids"
 
-  - name: stg_counts_by_year
-    description: "unnested author citation counts by year"
-
-  - name: number_of_authors
+  - name: authors_counts_by_year
     description: "distinct number of authors from each year"

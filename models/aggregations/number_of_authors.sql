@@ -4,5 +4,5 @@
 select 
     year, 
     count(distinct author_id) as author_count
-from {{ ref('stg_counts_by_year') }}
+from {{ ref('authors_counts_by_year') }}
 group by year

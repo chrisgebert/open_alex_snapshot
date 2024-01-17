@@ -19,9 +19,9 @@ clean-targets:
 
 models:
   open_alex_authors:
-    stg_authors_cited:
+    stg_authors:
       +materialized: table
-    stg_authors_concepts_cited:
+    stg_author_concepts:
       +materialized: table
-    number_of_authors:
+    stg_author_institution:
       +materialized: table

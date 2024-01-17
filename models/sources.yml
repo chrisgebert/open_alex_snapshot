@@ -2,9 +2,27 @@
 version: 2
 
 sources:
-  - name: open_alex_authors
+  - name: open_alex_snapshot
     schema: main
-    description: "Latest OpenAlex author data snapshot"
+    description: "Latest OpenAlex data snapshot"
+    meta:
+      external_location: read_json_auto('./data/authors/updated_date=2023-07-*/*.gz')
     tables:
-      - name: september_2023_snapshot
-  
+      - name: raw_authors
+        meta:
+          external_location: read_json_auto('./data/authors/*/*.gz')
+      - name: raw_concepts
+        meta:
+          external_location: read_json_auto('./data/concepts/*/*.gz')
+      - name: raw_institutions
+        meta:
+          external_location: read_json_auto('./data/institutions/*/*.gz')
+      - name: raw_publishers
+        meta:
+          external_location: read_json_auto('./data/publishers/*/*.gz')
+      - name: raw_sources
+        meta:
+          external_location: read_json_auto('./data/sources/*/*.gz')
+      - name: raw_works
+        meta:
+          external_location: read_json_auto('./data/works/*/*.gz')
