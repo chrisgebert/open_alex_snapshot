@@ -6,9 +6,9 @@
 
 with unnest_author_counts_by_year as (
     select
-        author_id,
+        id as author_id,
         unnest(counts_by_year, recursive := true)
-    from {{ ref('stg_authors') }}
+    from {{ source('open_alex_snapshot', 'raw_authors') }}
 )
 
 select

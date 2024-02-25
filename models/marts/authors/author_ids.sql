@@ -1,19 +1,21 @@
 {{ 
     config(
         materialized='table'
-    ) 
+    )
 }}
 
 with unnest_author_ids as (
     select
-        author_id,
-        unnest(ids)
-    from {{ ref('stg_authors') }}
+        id as author_id,
+        unnest(ids),
+        updated_date
+    from {{ source('open_alex_snapshot', 'raw_authors') }}
 )
 
 select
     author_id,
     openalex,
     orcid,
-    scopus
+    scopus,
+    updated_date
 from unnest_author_ids

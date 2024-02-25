@@ -4,18 +4,30 @@
     )
 }}
 
+with extracted_author_date as (
+    select
+        id as author_id,
+        orcid,
+        display_name,
+        display_name_alternatives,
+        works_count,
+        cited_by_count,
+        json_extract_string(last_known_institution, ['institution_lineage', 'display_name', 'country_code']) extracted_institution,
+        works_api_url,
+        updated_date
+    from {{ source('open_alex_snapshot', 'raw_authors')}}
+)
+
 select
-    stg_authors.author_id as id,
+    author_id,
     orcid,
     display_name,
     display_name_alternatives,
     works_count,
     cited_by_count,
-    last_known_institution,
-    institution_display_name,
-    institution_country_code,
+    extracted_institution[1] as institution_lineage,
+    extracted_institution[2] as institution_display_name,
+    extracted_institution[3] as institution_country_code,
     works_api_url,
     updated_date
-from {{ ref('stg_authors') }}
-left join {{ ref('stg_author_institution') }}
-    on stg_authors.author_id = stg_author_institution.author_id
+from extracted_author_date
