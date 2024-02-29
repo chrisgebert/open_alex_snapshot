@@ -5,7 +5,7 @@
 }}
 
 select
-    institution_id as id,
+    id as institution_id,
     ror,
     display_name,
     country_code,
@@ -19,4 +19,4 @@ select
     cited_by_count,
     works_api_url,
     updated_date
-from {{ ref('stg_institutions') }}
+from {{ source('open_alex_snapshot', 'raw_institutions') }}

@@ -4,16 +4,23 @@
     ) 
 }}
 
-with unnest_institution_counts_by_year as (
+with institution_counts_by_year_structure as (
+    select
+        id as institution_id,
+        from_json(counts_by_year, '[{"year":"UBIGINT","works_count":"UBIGINT","oa_works_count":"UBIGINT","cited_by_count":"UBIGINT"}]') institution_counts_by_year_structure
+    from {{ source('open_alex_snapshot', 'raw_institutions') }}
+),
+
+unnest_institution_counts_by_year as (
     select
         institution_id,
-        unnest(counts_by_year, recursive := true)
-    from {{ ref('stg_institutions') }}
+        unnest(institution_counts_by_year_structure) as unnest
+    from institution_counts_by_year_structure
 )
 
 select
     institution_id,
-    year,
-    works_count,
-    cited_by_count
+    unnest.year,
+    unnest.works_count,
+    unnest.cited_by_count
 from unnest_institution_counts_by_year

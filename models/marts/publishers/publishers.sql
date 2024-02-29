@@ -5,7 +5,7 @@
 }}
 
 select
-    publisher_id as id,
+    id as publisher_id,
     display_name,
     alternate_titles,
     country_codes,
@@ -15,4 +15,4 @@ select
     cited_by_count,
     sources_api_url,
     updated_date
-from {{ ref('stg_publishers') }}
+from {{ source('open_alex_snapshot', 'raw_publishers') }}

@@ -5,7 +5,7 @@
 }}
 
 select
-    source_id as id,
+    id as source_id,
     issn_l,
     issn,
     display_name,
@@ -17,4 +17,4 @@ select
     homepage_url,
     works_api_url,
     updated_date
-from {{ ref('stg_sources') }}
+from {{ source('open_alex_snapshot', 'raw_sources') }}

@@ -4,19 +4,12 @@
     ) 
 }}
 
-with unnest_concept_ids as (
-    select
-        concept_id,
-        unnest(ids)
-    from {{ ref('stg_concepts') }}
-)
-
 select
-    concept_id,
-    openalex,
-    wikidata,
-    wikipedia,
-    umls_aui,
-    umls_cui,
-    mag
-from unnest_concept_ids
+    id as concept_id,
+    ids.openalex,
+    ids.wikidata,
+    ids.wikipedia,
+    ids.umls_aui,
+    ids.umls_cui,
+    ids.mag
+from {{ source('open_alex_snapshot', 'raw_concepts') }}

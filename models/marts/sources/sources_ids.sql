@@ -4,19 +4,12 @@
     ) 
 }}
 
-with unnest_sources_ids as (
-    select
-        source_id,
-        unnest(ids, recursive := true)
-    from {{ ref('stg_sources') }}
-)
-
 select
-    source_id,
-    openalex,
-    issn_l,
-    issn,
-    mag,
-    wikidata,
-    fatcat
-from unnest_sources_ids
+    id as source_id,
+    ids.openalex,
+    ids.issn_l,
+    ids.issn,
+    ids.mag,
+    ids.wikidata,
+    ids.fatcat
+from {{ source('open_alex_snapshot', 'raw_sources') }}

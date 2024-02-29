@@ -4,20 +4,13 @@
     ) 
 }}
 
-with unnest_institutions_geo as (
-    select
-        institution_id,
-        unnest(geo, recursive := true)
-    from {{ ref('stg_institutions') }}
-)
-
 select
-    institution_id,
-    city,
-    geonames_city_id,
-    region,
-    country_code,
-    country,
-    latitude,
-    longitude
-from unnest_institutions_geo
+    id as institution_id,
+    geo.city,
+    geo.geonames_city_id,
+    geo.region,
+    geo.country_code,
+    geo.country,
+    geo.latitude,
+    geo.longitude
+from {{ source('open_alex_snapshot', 'raw_institutions') }}

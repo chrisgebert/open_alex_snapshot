@@ -5,7 +5,7 @@
 }}
 
 select
-    concept_id as id,
+    id as concept_id,
     wikidata,
     display_name,
     level,
@@ -16,4 +16,4 @@ select
     image_thumbnail_url,
     works_api_url,
     updated_date
-from {{ ref('stg_concepts')}}
+from {{ source('open_alex_snapshot', 'raw_concepts') }}
