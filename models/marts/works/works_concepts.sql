@@ -7,7 +7,7 @@
 with works_concept_structure as (
     select
         id as work_id,
-        from_json(concepts, '[{"id":"VARCHAR","wikidata":"VARCHAR","display_name":"VARCHAR","level":"BIGINT","score":"DOUBLE"}]') concept_structure
+        from_json(concepts, '[{"id":"VARCHAR","level":"BIGINT","score":"DOUBLE"}]') concept_structure
     from {{ source('open_alex_snapshot', 'raw_works') }}
 ),
 
@@ -15,7 +15,7 @@ unnest_works_concepts as (
     select
         work_id,
         unnest(concept_structure) as unnested
-    from concept_structure
+    from works_concept_structure
 )
 
 select

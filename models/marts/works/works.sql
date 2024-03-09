@@ -5,7 +5,7 @@
 }}
 
 select
-    work_id as id,
+    id as work_id,
     doi,
     title,
     display_name,
@@ -18,4 +18,4 @@ select
     cited_by_api_url,
     language,
     updated_date
-from {{ ref('stg_works') }}
+from {{ source('open_alex_snapshot', 'raw_works') }}

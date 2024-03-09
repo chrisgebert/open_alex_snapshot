@@ -6,9 +6,9 @@
 
 with unnested_referenced_works as (
     select
-        work_id,
+        id as work_id,
         unnest(referenced_works) as referenced_work_id
-from {{ ref('stg_works_referenced_related') }}
+from {{ source('open_alex_snapshot', 'raw_works') }}
 )
 
 select

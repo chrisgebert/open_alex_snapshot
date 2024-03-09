@@ -4,17 +4,10 @@
     ) 
 }}
 
-with unnest_works_biblio as (
-    select
-        work_id,
-        unnest(biblio, recursive := true)
-    from {{ ref('stg_works') }}
-)
-
 select
-    work_id,
-    volume,
-    issue,
-    first_page,
-    last_page
-from unnest_works_biblio
+    id as work_id,
+    biblio.volume,
+    biblio.issue,
+    biblio.first_page,
+    biblio.last_page
+from {{ source('open_alex_snapshot', 'raw_works') }}

@@ -5,8 +5,8 @@
 }}
 
 select
-    work_id,
+    id as work_id,
     doi,
     ids.mag,
     ids.pmid
-from {{ ref('stg_works') }}
+from {{ source('open_alex_snapshot', 'raw_works') }}

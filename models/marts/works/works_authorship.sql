@@ -4,25 +4,23 @@
     ) 
 }}
 
-with unnest_works_authorships as (
+with works_authorships_structure as (
     select
-        work_id,
-        unnest(authorships, recursive := true)
-    from {{ ref('stg_works_authorships') }}
+        id as work_id,
+        from_json(authorships, '[{"author_position":"VARCHAR","author":{"id":"VARCHAR","display_name":"VARCHAR","orcid":"NULL"},"institutions":["NULL"],"countries":["NULL"],"is_corresponding":"BOOLEAN","raw_author_name":"VARCHAR","raw_affiliation_strings":["NULL"],"raw_affiliation_string":"VARCHAR"}]') authorships_structure
+    from {{ source('open_alex_snapshot', 'raw_works') }}
 ),
 
-unnest_authorship_institutions as (
+unnest_authorships as (
     select
         work_id,
-        author_position,
-        id as author_id,
-        unnest(institutions, recursive := true)
-    from unnest_works_authorships
+        unnest(authorships_structure) as unnest,
+    from works_authorships_structure
 )
 
 select
     work_id,
-    author_position,
-    author_id,
-    id as institution_id
-from unnest_authorship_institutions
+    unnest.author_position,
+    unnest.author.id as author_id,
+    unnest.institutions
+from unnest_authorships
