@@ -1,6 +1,7 @@
 {{ 
     config(
-        materialized='table'
+        materialized='incremental',
+        unique_key = 'work_id'
     ) 
 }}
 
@@ -19,3 +20,10 @@ select
     language,
     updated_date
 from {{ source('open_alex_snapshot', 'raw_works') }}
+where 1 = 1
+
+{% if is_incremental() %}
+
+and updated_date >= (select max(updated_date) from {{ this }} )
+
+{% endif %}

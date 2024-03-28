@@ -1,13 +1,15 @@
-open_alex_authors:
+open_alex_snapshot:
 
   target: dev
   outputs:
     dev:
       type: duckdb
-      path: 'open_alex_authors.duckdb'
-      threads: 1
+      path: 'open_alex_snapshot.duckdb'
+      threads: 4
       extensions:
         - httpfs
+      settings:
+        preserve_insertion_order: false
     prod:
       type: duckdb
       path: "md:open_alex_authors"

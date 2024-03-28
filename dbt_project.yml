@@ -1,9 +1,9 @@
 
-name: 'open_alex_authors'
+name: 'open_alex_snapshot'
 version: '1.0.0'
 config-version: 2
 
-profile: 'open_alex_authors'
+profile: 'open_alex_snapshot'
 
 model-paths: ["models"]
 analysis-paths: ["analyses"]
@@ -18,10 +18,11 @@ clean-targets:
 
 
 models:
-  open_alex_authors:
-    stg_authors:
+  open_alex_snapshot:
+    authors:
       +materialized: table
-    stg_author_concepts:
+    author_ids:
       +materialized: table
-    stg_author_institution:
+    author_counts_by_year:
       +materialized: table
+    

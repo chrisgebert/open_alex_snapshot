@@ -7,7 +7,17 @@
 with associated_institutions_structure as (
     select
         id as institution_id,
-        from_json(associated_institutions, '[{"id":"VARCHAR","ror":"VARCHAR","display_name":"VARCHAR","country_code":"VARCHAR","type":"VARCHAR","relationship":"VARCHAR","lineage":"NULL"}]') associated_institutions_structure
+        from_json(associated_institutions, '[
+            {
+                "id":"VARCHAR",
+                "ror":"VARCHAR",
+                "display_name":"VARCHAR",
+                "country_code":"VARCHAR",
+                "type":"VARCHAR",
+                "relationship":"VARCHAR",
+                "lineage":"NULL"
+            }
+        ]') associated_institutions_structure
     from {{ source('open_alex_snapshot', 'raw_institutions') }}
 ),
 

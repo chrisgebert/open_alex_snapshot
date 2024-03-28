@@ -4,18 +4,11 @@
     ) 
 }}
 
-with works_concept_structure as (
+with unnest_works_concepts as (
     select
         id as work_id,
-        from_json(concepts, '[{"id":"VARCHAR","level":"BIGINT","score":"DOUBLE"}]') concept_structure
-    from {{ source('open_alex_snapshot', 'raw_works') }}
-),
-
-unnest_works_concepts as (
-    select
-        work_id,
         unnest(concept_structure) as unnested
-    from works_concept_structure
+    from {{ source('open_alex_snapshot', 'raw_works') }}
 )
 
 select

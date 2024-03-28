@@ -4,23 +4,27 @@
     ) 
 }}
 
-with institution_counts_by_year_structure as (
+with insitution_counts_by_year as (
+
     select
         id as institution_id,
-        from_json(counts_by_year, '[{"year":"UBIGINT","works_count":"UBIGINT","oa_works_count":"UBIGINT","cited_by_count":"UBIGINT"}]') institution_counts_by_year_structure
+        counts_by_year
     from {{ source('open_alex_snapshot', 'raw_institutions') }}
+
 ),
 
-unnest_institution_counts_by_year as (
+unnest_counts_by_year as (
+    
     select
         institution_id,
-        unnest(institution_counts_by_year_structure) as unnest
-    from institution_counts_by_year_structure
+        unnest(counts_by_year) as unnested
+    from insitution_counts_by_year
+
 )
 
 select
     institution_id,
-    unnest.year,
-    unnest.works_count,
-    unnest.cited_by_count
-from unnest_institution_counts_by_year
+    unnested.year,
+    unnested.works_count,
+    unnested.cited_by_count
+from unnest_counts_by_year

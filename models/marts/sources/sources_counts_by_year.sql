@@ -7,7 +7,14 @@
 with sources_counts_by_year_structure as (
     select
         id as source_id,
-        from_json(counts_by_year, '[{"year":"UBIGINT","works_count":"UBIGINT","oa_works_count":"UBIGINT","cited_by_count":"UBIGINT"}]') sources_counts_by_year_structure
+        from_json(counts_by_year, '[
+            {
+                "year":"UBIGINT",
+                "works_count":"UBIGINT",
+                "oa_works_count":"UBIGINT",
+                "cited_by_count":"UBIGINT"
+            }
+        ]') sources_counts_by_year_structure
     from {{ source('open_alex_snapshot', 'raw_sources') }}
 ),
 
