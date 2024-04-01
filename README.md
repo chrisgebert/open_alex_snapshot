@@ -19,7 +19,9 @@ First, a little background:
 
 In a short amount of time, OpenAlex started compiling data related to academic publications (e.g. works, authors, publications, institutions, etc.). They stood up an API and documentation and made this data available to the community at no charge.
 
-In addition, they began releasing regular data snapshots in [s3](https://registry.opendata.aws/openalex/) for those who have needs outside of what's provided by the API. The snapshots are released monthly, and the August author data snapshot from this year [included an improved author disambiguation feature](https://groups.google.com/g/openalex-users/c/yRgoy2oD2f8/m/iXfGguhQBgAJ), which can be a [thorny problem to solve](https://docs.openalex.org/api-entities/authors/author-disambiguation).
+In addition, they began releasing regular data snapshots in [s3](https://registry.opendata.aws/openalex/) for those who have needs outside of what's provided by the API. The snapshots are released monthly, and the August author data snapshot from 2023 [included an improved author disambiguation feature](https://groups.google.com/g/openalex-users/c/yRgoy2oD2f8/m/iXfGguhQBgAJ), which can be a [thorny problem to solve](https://docs.openalex.org/api-entities/authors/author-disambiguation).
+
+More recently, they've started to use [a method for classifying research topics of a particular work](https://help.openalex.org/how-it-works/topics) developed in partnership with CWTS at Leiden University. This is a move away from `concepts` that existed in the former data model which were inherited from MAG. 
 
 ## DuckDB, and friends (`dbt-duckdb` and MotherDuck)
 
@@ -30,14 +32,14 @@ In addition, they began releasing regular data snapshots in [s3](https://registr
 ### `dbt-duckdb`
 
 [`dbt-duckdb`](https://github.com/duckdb/dbt-duckdb) is a dbt adapter built for use with DuckDB (and also, recently MotherDuck) so we can:
-1. create a single data source from all the most recent OpenAlex snapshot files, and 
+1. create data sources from all the most recent OpenAlex snapshot files, and 
 2. build a dbt project on top of it, allowing us to make use of all the great things about [`dbt`](https://www.getdbt.com/), like testing and macros and packages created by that community.
 
 ### MotherDuck
 
 [MotherDuck](https://motherduck.com) is a serverless instance of DuckDB in the cloud.
 
-I was [granted access to the beta](https://jawns.club/@cgebert/110714745527510396) a little while ago (though they've recently announced they're welcoming sign-ups from anyone), and the timing has been perfect to play around with this and see what I can do using the recent improved author snapshot files from OpenAlex.
+I was [granted access to the beta](https://jawns.club/@cgebert/110714745527510396) a little while ago (though they've since announced they're welcoming sign-ups from anyone), and the timing has been perfect to play around with this and see what I can do.
 
 ### Note
 
@@ -45,94 +47,65 @@ Importantly: OpenAlex and MotherDuck both use s3 region `us-east-1` so the data 
 
 # Exploratory Analysis
 
-For our exploratory analysis, we can follow the [OpenAlex documentation to download all the snapshot files](https://docs.openalex.org/download-all-data/download-to-your-machine) to our machine, or alternatively, we can use DuckDB to query one or more of those file directly without downloading them first.
+For our exploratory analysis, we can follow the [OpenAlex documentation to download all the snapshot files](https://docs.openalex.org/download-all-data/download-to-your-machine) to our machine. Or alternatively, we can use DuckDB to query one or more of those file directly without downloading them first.
 
 For now, we'll query [just one of the files using the file path](https://docs.openalex.org/download-all-data/snapshot-data-format#the-manifest-file) from the [most recent manifest](https://openalex.s3.amazonaws.com/data/authors/manifest), and once we're more familiar with the data model, we'll grab all the files that make up the snapshot. 
 
 ## Review a snapshot data file using DuckDB
 
-We'll need to first install and load the `httpfs` extension to use DuckDB to read one or more snapshot files into memory. Which looks like this in python:
+We'll start by using [DESCRIBE](https://duckdb.org/docs/guides/meta/describe) to take a look at the schema of one of the author snapshot files. 
 
-```python
-import duckdb
-
-duckdb.sql("install 'httpfs'; load 'httpfs';")
-
-duckdb.sql("select * from read_json_auto('https://openalex.s3.amazonaws.com/data/authors/updated_date%3D2023-07-21/part_000.gz', format='newline_delimited', compression='gzip')")
+```sql
+describe (select * from read_nd_auto('s3://openalex/data/authors/updated_date=2023-02-24/part_000.gz'))
 ```
 
 <details>
 <summary>
-Query Results
+Results
 
 </summary>
 
 ```
-┌──────────────────────┬──────────────────────┬────────────────┬───┬──────────────┬─────────────┬────────────┐
-│      x_concepts      │ display_name_alter…  │ cited_by_count │ … │ created_date │ works_count │  updated   │
-│ struct(score doubl…  │      varchar[]       │     int64      │   │     date     │    int64    │    date    │
-├──────────────────────┼──────────────────────┼────────────────┼───┼──────────────┼─────────────┼────────────┤
-│ [{'score': 100.0, …  │ [J W Chappell, JB …  │           1840 │ … │ 2023-07-21   │           3 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Runa Patel]         │           1293 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Basket-Late Inves…  │           1273 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 41.7, '…  │ [Syaiful Bahri Dja…  │           1269 │ … │ 2023-07-21   │          12 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [L McVay-Boudreau]   │           1233 │ … │ 2023-07-21   │           7 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [E. Y. Chen]         │           1207 │ … │ 2023-07-21   │           2 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Sven-Erik Torhell]  │           1176 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [D. B. Payne]        │           1079 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Gard Pd]            │           1061 │ … │ 2023-07-21   │           4 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Frank Ostrander]    │           1057 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│          ·           │        ·             │             ·  │ · │     ·        │           · │     ·      │
-│          ·           │        ·             │             ·  │ · │     ·        │           · │     ·      │
-│          ·           │        ·             │             ·  │ · │     ·        │           · │     ·      │
-│ [{'score': 100.0, …  │ [David Menapace]     │            173 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Jenny Matilde Gui…  │            173 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Ah-Keng Kau]        │            173 │ … │ 2023-07-21   │           2 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Y. Ye]              │            173 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Jih Fei Cheng]      │            172 │ … │ 2023-07-21   │           1 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [M.-C. Hameau, M.C…  │            172 │ … │ 2023-07-21   │           4 │ 2023-07-21 │
-│ [{'score': 50.0, '…  │ [John Jukes]         │            172 │ … │ 2023-07-21   │           2 │ 2023-07-21 │
-│ [{'score': 87.5, '…  │ [M. Eccleston, M E…  │            172 │ … │ 2023-07-21   │           8 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Lawn Sd]            │            172 │ … │ 2023-07-21   │           4 │ 2023-07-21 │
-│ [{'score': 100.0, …  │ [Jyunichi Kajiwara]  │            172 │ … │ 2023-07-21   │           4 │ 2023-07-21 │
-├──────────────────────┴──────────────────────┴────────────────┴───┴──────────────┴─────────────┴────────────┤
-│ ? rows (>9999 rows, 20 shown)                                                         16 columns (6 shown) │
-└────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────┬─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┬─────────┬─────────┬─────────┬─────────┐
+│     column_name      │                                                                 column_type                                                                 │  null   │   key   │ default │  extra  │
+│       varchar        │                                                                   varchar                                                                   │ varchar │ varchar │ varchar │ varchar │
+├──────────────────────┼─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┼─────────┼─────────┼─────────┼─────────┤
+│ id                   │ VARCHAR                                                                                                                                     │ YES     │         │         │         │
+│ orcid                │ VARCHAR                                                                                                                                     │ YES     │         │         │         │
+│ display_name         │ VARCHAR                                                                                                                                     │ YES     │         │         │         │
+│ display_name_alter…  │ VARCHAR[]                                                                                                                                   │ YES     │         │         │         │
+│ works_count          │ BIGINT                                                                                                                                      │ YES     │         │         │         │
+│ cited_by_count       │ BIGINT                                                                                                                                      │ YES     │         │         │         │
+│ most_cited_work      │ VARCHAR                                                                                                                                     │ YES     │         │         │         │
+│ summary_stats        │ STRUCT("2yr_mean_citedness" DOUBLE, h_index BIGINT, i10_index BIGINT, oa_percent DOUBLE, works_count BIGINT, cited_by_count BIGINT, "2yr_…  │ YES     │         │         │         │
+│ affiliations         │ STRUCT(institution STRUCT(id VARCHAR, ror VARCHAR, display_name VARCHAR, country_code VARCHAR, "type" VARCHAR, lineage VARCHAR[]), "years…  │ YES     │         │         │         │
+│ ids                  │ STRUCT(openalex VARCHAR, orcid VARCHAR, scopus VARCHAR)                                                                                     │ YES     │         │         │         │
+│ last_known_institu…  │ STRUCT(id VARCHAR, ror VARCHAR, display_name VARCHAR, country_code VARCHAR, "type" VARCHAR, lineage VARCHAR[])                              │ YES     │         │         │         │
+│ last_known_institu…  │ STRUCT(id VARCHAR, ror VARCHAR, display_name VARCHAR, country_code VARCHAR, "type" VARCHAR, lineage VARCHAR[])[]                            │ YES     │         │         │         │
+│ counts_by_year       │ STRUCT("year" BIGINT, works_count BIGINT, oa_works_count BIGINT, cited_by_count BIGINT)[]                                                   │ YES     │         │         │         │
+│ x_concepts           │ STRUCT(id VARCHAR, wikidata VARCHAR, display_name VARCHAR, "level" BIGINT, score DOUBLE)[]                                                  │ YES     │         │         │         │
+│ works_api_url        │ VARCHAR                                                                                                                                     │ YES     │         │         │         │
+│ updated_date         │ DATE                                                                                                                                        │ YES     │         │         │         │
+│ created_date         │ DATE                                                                                                                                        │ YES     │         │         │         │
+│ updated              │ VARCHAR                                                                                                                                     │ YES     │         │         │         │
+├──────────────────────┴─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┴─────────┴─────────┴─────────┴─────────┤
+│ 18 rows                                                                                                                                                                                          6 columns |
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 </details>
 
-In this example, DuckDB read the compressed json file of 492 MB from s3 into an object in memory in about 10 seconds. 
+We can see the parsed data fields and how DuckDB will infer the data types while using the `read_ndjson_auto` function. While inferring the data types is an option, I've found it more useful to be as explicit as possible when parsing JSON source files for this project, especially for some of the nested fields.
 
-## Get a small sample of the records in these snapshot files to explore the data model
+### Nested data fields
 
-Let's limit the total number of records we're looking at just to understand what each of these fields contain and write the results to a `pandas` dataframe.
+This [snapshot documentation page](https://docs.openalex.org/download-all-data/upload-to-your-database) makes the distinction between loading data into a cloud data warehouse or to a relational database. When working with nested data structures in DuckDB, we can can choose to load the data as-is into the database and parse the JSON later. Or we can unnest the JSON as we're reading it to speed up later queries and improve efficiency.
 
-```python
-import duckdb
-import pandas as pd
+To be as explicit as possible (and to reduce loading large amounts of `inverted_abstract_index` data), I've chosen to define `columns` as a parameter to include with the `read_ndjson` function along with their data types. The data types can be found by using the `DESCRIBE` function as used above, or through a method similar to the [one documented here](ttps://github.com/duckdb/duckdb/discussions/5272). Whether it's as the file is being read initially, or from a raw table loaded as is, it's most efficient to parse the JSON once and only once.
 
-df = duckdb.sql("select * from read_json_auto('https://openalex.s3.amazonaws.com/data/authors/updated_date%3D2023-07-21/part_000.gz', format='newline_delimited', compression='gzip') limit 100").df()
+## 
 
-df.columns
-
-Index(['x_concepts', 'display_name_alternatives', 'cited_by_count', 'most_cited_work', 'counts_by_year',          
-      'last_known_institution', 'orcid', 'display_name', 'summary_stats', 'works_api_url', 'ids', 'id',
-      'updated_date', 'created_date', 'works_count', 'updated'],
-      dtype='object')
-```
-
-So in these compressed json files, we have:
-- an OpenAlex `id`,
-- a `display_name` field,
-- a `cited_by_count` field,
-- a `most_cited_work` field,
-- a few arrays (including `x_concepts`, `display_name_alternatives`, `counts_by_year`) and
-- some struct objects (like `last_known_institution`, `summary_stats`, and other `ids`).
-
-This helps us understand what's available in further exploration in a single snapshot instance, or if we're interested how things change from one snapshot file to the next over time.
-
-From here, it's simplest to follow the [OpenAlex documentation](https://docs.openalex.org/download-all-data/download-to-your-machine) and use the `aws cli` commands to sync all the author snapshot files to a local directory, which were about 28GB and 105 files total in the latest snapshot. 
+At this point, we'll download all the snapshot files and store them locally so we don't need to pull them from the s3 bucket. There's a few different ways to do this, but the [OpenAlex documentation](https://docs.openalex.org/download-all-data/download-to-your-machine) using the `aws cli` is probably simplest.
 
 ```sh
 aws s3 ls --summarize --human-readable --no-sign-request --recursive "s3://openalex/data/authors/"
@@ -140,7 +113,7 @@ aws s3 ls --summarize --human-readable --no-sign-request --recursive "s3://opena
 aws s3 sync --delete "s3://openalex/data/authors/" "data/authors/" --no-sign-request
 ```
 
-# Loading Snapshot Files into a Local DuckDB Database
+# Loading snapshot files into a local DuckDB database
 
 We can make use of DuckDB's [COPY](https://duckdb.org/docs/sql/statements/copy.html) or [CREATE TABLE](https://duckdb.org/docs/sql/statements/create_table) commands to insert these downloaded files into a persisted `.duckdb` database that we store locally. Which looks like this when using the DuckDB CLI:
 
@@ -148,10 +121,8 @@ We can make use of DuckDB's [COPY](https://duckdb.org/docs/sql/statements/copy.h
 duckdb open_alex_authors.duckdb
 
 select count(*)
-from read_json_auto(
-  '~/open_alex_authors/data/authors/*/*.gz',
-  format='newline_delimited',
-  compression='gzip'
+from read_ndjson(
+  '~/open_alex_authors/data/authors/*/*.gz'
 );
 ```
 
@@ -173,138 +144,93 @@ Query Result
 </details>
 
 ```sql
-create table september_2023_snapshot
-from read_json_auto(
-  '~/open_alex_authors/data/authors/*/*.gz',
-  format='newline_delimited',
+create table authors
+from read_ndjson(
+  '~/open_alex_snapshot/february_2024_snapshot/data/authors/*/*.gz',
+  columns = {
+    id: 'VARCHAR',
+    orcid: 'VARCHAR',
+    display_name: 'VARCHAR',
+    display_name_alternatives: 'VARCHAR[]',
+    works_count: 'BIGINT',
+    cited_by_count: 'BIGINT',
+    most_cited_work: 'VARCHAR',
+    ids: 'STRUCT(openalex VARCHAR, orcid VARCHAR, scopus VARCHAR)',
+    last_known_institution: 'STRUCT(id VARCHAR, ror VARCHAR, display_name VARCHAR, country_code VARCHAR, type VARCHAR, lineage VARCHAR[])',
+    counts_by_year: 'STRUCT(year VARCHAR, works_count BIGINT, oa_works_count BIGINT, cited_by_count BIGINT)[]',
+    works_api_url: 'VARCHAR',
+    updated_date: 'DATE',
+    created_date: 'DATE',
+    updated: 'VARCHAR'
+  }
   compression='gzip'
 );
 ```
 
-The benefit of loading the data into the database using DuckDB at this step is that we can bypass the need to run python scripts to flatten the compressed json source files into CSVs. We can unnest the nested JSON fields later if we decide those are valuable to our analysis, but this method will better mirror the data as it existed at the time of its extraction in its original form and may even allow us to start diving into the specifics of the snapshot sooner.
-
-# Develop Our Analysis
-
-## Revise our queries to begin analysis and modeling
-
-Let's say we'd like to focus only on those authors who have been cited. (Nothing against those who haven't been cited of course; bibliometric analysis uses with the currency of citations that are available.)
-
-We could define a stage table of those `author_ids` like this:
-
-```sql
-select
-  id as author_id
-from september_2023_snapshot
-where cited_by_count != 0;
-```
-
-Or let's say we want to start unnesting the `counts_by_year` array to get discrete citation counts for a particular year.
-
-```sql
-select
-  id as author_id,
-  unnest(counts_by_year, recursive := true)
-from september_2023_snapshot;
-```
-
-Or extracting the `display_name` of the `last_known_institution` dict.
-
-```sql
-select
-  id as author_id,
-  display_name, 
-  json_extract(last_known_institution, '$.display_name'),
-  works_count, 
-  cited_by_count
-from september_2023_snapshot
-where cited_by_count > 10;
-```
-
 # Using `dbt` and `dbt-duckdb`
 
-## Create a `dbt` project from our analysis
-
-Once we have identified and developed the queries we're interested in tracking from snapshot to snapshot, we can build a `dbt` project that uses OpenAlex database snapshots as a source to materialize actual tables to perform ongoing analysis and even output files, using `dbt-duckdb`.
+## Set up the `dbt` project
 
 ### Create `profiles.yml`
 
-With `dbt-duckdb`, we can work using a persisted `.duckdb` database file, using memory, or using MotherDuck, which we'll get to. In our `profiles.yml`, we can create a new profile with `type: duckdb` and [configure any other `settings` or `extensions`](https://github.com/duckdb/dbt-duckdb#duckdb-extensions-settings-and-filesystems) we'll use, like `httpfs` if necessary.
+With `dbt-duckdb`, we can work using a persisted `.duckdb` database file, using memory, or using MotherDuck, which we'll get to. In our `profiles.yml`, we can create a new profile with `type: duckdb` and [configure any other `settings` or `extensions`](https://github.com/duckdb/dbt-duckdb#duckdb-extensions-settings-and-filesystems) we'll use.
 
 ```yaml
-open_alex_authors:
+open_alex_snapshot:
 
   target: dev
   outputs:
     dev:
       type: duckdb
-      path: 'open_alex_authors.duckdb'
-      threads: 24
+      path: 'open_alex_snapshot.duckdb'
+      threads: 1
       extensions:
         - httpfs
 ```
 
 ### Create `sources.yml`
 
-We'll use the local copy of our DuckDB database as the source, but we could also use the `external_location` meta option with the relevant `read_json_auto` parameters if we're reading files directly from s3 without loading them into a local database.
+We'll define the local copy of our OpenAlex snapshot files as various raw sources, but we could also use the `external_location` meta option with the relevant `read_ndjson` parameters if we're reading files directly from s3 without loading them into a local database. Here's what the `raw_authors` source would look like in `sources.yml`:
 
 ```yaml
 version: 2
 
 sources:
-  - name: open_alex_authors
+  - name: open_alex_snapshot
     schema: main
-    description: "Latest OpenAlex author data snapshot"
+    description: "Latest OpenAlex data snapshot"
     # meta:
     #   external_location: "read_json_auto('s3://openalex/data/authors/updated_date=2023-08-15/*.gz', format='newline_delimited', compression='gzip')"
     tables:
-      - name: september_2023_snapshot
+      - name: raw_authors
+        meta:
+          external_location: >
+            read_ndjson('~/open_alex_snapshot/february_2024_snapshot/data/authors/*/*.gz',
+            columns = {
+              id: 'VARCHAR',
+              orcid: 'VARCHAR',
+              display_name: 'VARCHAR',
+              display_name_alternatives: 'VARCHAR[]',
+              works_count: 'BIGINT',
+              cited_by_count: 'BIGINT',
+              most_cited_work: 'VARCHAR',
+              ids: 'STRUCT(openalex VARCHAR, orcid VARCHAR, scopus VARCHAR)',
+              last_known_institution: 'STRUCT(id VARCHAR, ror VARCHAR, display_name VARCHAR, country_code VARCHAR, type VARCHAR, lineage VARCHAR[])',
+              counts_by_year: 'STRUCT(year VARCHAR, works_count BIGINT, oa_works_count BIGINT, cited_by_count BIGINT)[]',
+              works_api_url: 'VARCHAR',
+              updated_date: 'DATE',
+              created_date: 'DATE',
+              updated: 'VARCHAR'
+            })
 ```
 
 ### Create models
 
-We can define stage models (e.g `stg_authors_cited.sql`, `stg_authors_concepts_cited.sql`, or `stg_counts_by_year.sql`), or intermediate models, or aggregation models (like `number_of_authors.sql`) using `dbt`.
-
-```sh
-dbt run --select stg_authors_cited stg_authors_concepts_cited stg_counts_by_year number_of_authors
-```
-
-<details>
-<summary>
-
-`dbt run`
-
-</summary>
-
-```
-(open_alex_authors) M20 :: projects/open_alex_authors » dbt run --select stg_authors_cited stg_authors_concepts_cited stg_counts_by_year number_of_authors
-01:20:20  Running with dbt=1.5.2
-01:20:21  Registered adapter: duckdb=1.5.2
-01:20:21  Unable to do partial parsing because a project config has changed
-01:20:21  Found 4 models, 0 tests, 0 snapshots, 0 analyses, 316 macros, 0 operations, 0 seed files, 1 source, 0 exposures, 0 metrics, 0 groups
-01:20:21  
-01:20:22  Concurrency: 24 threads (target='dev')
-01:20:22  
-01:20:22  1 of 4 START sql table model main.stg_authors_cited ............................ [RUN]
-01:20:22  2 of 4 START sql table model main.stg_counts_by_year ........................... [RUN]
-01:20:37  1 of 4 OK created sql table model main.stg_authors_cited ....................... [OK in 15.59s]
-01:20:37  3 of 4 START sql table model main.stg_authors_concepts_cited ................... [RUN]
-01:27:18  2 of 4 OK created sql table model main.stg_counts_by_year ...................... [OK in 415.90s]
-01:27:18  4 of 4 START sql table model main.number_of_authors ............................ [RUN]
-01:39:48  4 of 4 OK created sql table model main.number_of_authors ....................... [OK in 750.45s]
-01:48:42  3 of 4 OK created sql table model main.stg_authors_concepts_cited .............. [OK in 1684.83s]
-01:48:42  
-01:48:42  Finished running 4 table models in 0 hours 28 minutes and 20.97 seconds (1700.97s).
-01:48:43  
-01:48:43  Completed successfully
-01:48:43  
-01:48:43  Done. PASS=4 WARN=0 ERROR=0 SKIP=0 TOTAL=4
-```
-</details>
-
+Once the sources are defined, we can use the [OpenAlex Postgres schema diagram](https://docs.openalex.org/download-all-data/upload-to-your-database/load-to-a-relational-database/postgres-schema-diagram) (with a few modifications) to detail the models that will be created in our `dbt` project. I've set up a few of these as incremental models relying on the `updated_date`, but I haven't seen a great reduction in processing as a result from snapshot to snapshot.
 
 ### Create outputs
 
-From these models, we can begin to output files (using `dbt-duckdb`'s functionality to [write to external files](https://github.com/duckdb/dbt-duckdb#writing-to-external-files)), or [export the data to parquet](https://duckdb.org/docs/guides/import/parquet_export) or another compressed format, or begin to use a BI tool like [Evidence.dev](https://evidence.dev/) to generate reports that will produce analysis about specific parts of the most recent OpenAlex snapshot. 
+From these models, we can begin to output files (using `dbt-duckdb`'s functionality to [write to external files](https://github.com/duckdb/dbt-duckdb#writing-to-external-files)), or [export the data to parquet](https://duckdb.org/docs/guides/import/parquet_export) or another compressed format, or begin to use a BI tool like [evidence.dev](https://evidence.dev/) to generate reports that will produce analysis about specific parts of the most recent OpenAlex snapshot. 
 
 # Using MotherDuck
 
@@ -359,16 +285,24 @@ ATTACH 'md:_share/open_alex_authors/5d0ef4a6-8f80-4c74-b821-08fda756ca2d'
 
 # Next Steps
 
-From here, since different disciplines are cited at different rates, it'd make sense to start parsing the `x_concepts` fields to explore which authors and which institutions are most highly cited within a given [concept](https://docs.openalex.org/api-entities/concepts/concept-object) so we can begin to track how those within top percentages change over time from snapshot to snapshot.
+From here, since different disciplines are cited at different rates, it'd make sense to start parsing the `topics` fields to explore which authors and which institutions are most highly cited within a given [topic](https://docs.openalex.org/api-entities/topics) so we can begin to track how those within top percentages change over time from snapshot to snapshot.
 
 # Read More:
 
-- Authenticating to MotherDuck: https://motherduck.com/docs/getting-started/connect-query-from-python/installation-authentication/
+[1]: https://www.leidenmadtrics.nl/articles/an-open-approach-for-classifying-research-publications "An open approach for classifying research publications"
 
-- MotherDuck + dbt: Better Together: https://motherduck.com/blog/motherduck-duckdb-dbt/
+[2]: https://motherduck.com/docs/getting-started/connect-query-from-python/installation-authentication/ "Authenticating to MotherDuck"
 
-- OpenAlex Snapshot Data Format: https://docs.openalex.org/download-all-data/snapshot-data-format
+[3]: https://motherduck.com/blog/motherduck-duckdb-dbt/ "MotherDuck + dbt: Better Together"
 
-- Querying files in S3: https://motherduck.com/docs/key-tasks/querying-s3-files
+[4]: https://docs.openalex.org/download-all-data/snapshot-data-format "OpenAlex Snapshot Data Format"
 
-- Using MotherDuck with `dbt-duckdb`: https://github.com/duckdb/dbt-duckdb#using-motherduck
+[5]: https://www.leidenmadtrics.nl/articles/opening-up-the-cwts-leiden-ranking-toward-a-decentralized-and-open-model-for-data-curation "Opening up the CWTS Leiden Ranking: Toward a decentralized and open model for data curation"
+
+[5]: https://motherduck.com/docs/key-tasks/querying-s3-files "Querying files in S3"
+
+[6]: https://duckdb.org/2023/03/03/json "Shredding Deeply Nested JSON, One Vector at a Time"
+
+[7]: https://github.com/duckdb/dbt-duckdb#using-motherduck "Using MotherDuck with `dbt-duckdb`"
+
+[8]: https://bnm3k.github.io/blog/wrangling-json-with-duckdb "Wrangling JSON with DuckDB"
