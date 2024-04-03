@@ -56,7 +56,7 @@ For now, we'll query [just one of the files using the file path](https://docs.op
 We'll start by using [DESCRIBE](https://duckdb.org/docs/guides/meta/describe) to take a look at the schema of one of the author snapshot files. 
 
 ```sql
-describe (select * from read_nd_auto('s3://openalex/data/authors/updated_date=2023-02-24/part_000.gz'))
+describe (select * from read_ndjson_auto('s3://openalex/data/authors/updated_date=2023-02-24/part_000.gz'))
 ```
 
 <details>
@@ -101,9 +101,11 @@ We can see the parsed data fields and how DuckDB will infer the data types while
 
 This [snapshot documentation page](https://docs.openalex.org/download-all-data/upload-to-your-database) makes the distinction between loading data into a cloud data warehouse or to a relational database. When working with nested data structures in DuckDB, we can can choose to load the data as-is into the database and parse the JSON later. Or we can unnest the JSON as we're reading it to speed up later queries and improve efficiency.
 
-To be as explicit as possible (and to reduce loading large amounts of `inverted_abstract_index` data), I've chosen to define `columns` as a parameter to include with the `read_ndjson` function along with their data types. The data types can be found by using the `DESCRIBE` function as used above, or through a method similar to the [one documented here](ttps://github.com/duckdb/duckdb/discussions/5272). Whether it's as the file is being read initially, or from a raw table loaded as is, it's most efficient to parse the JSON once and only once.
+To be as explicit as possible (and to reduce loading large amounts of `inverted_abstract_index` data), I've chosen to define `columns` as a parameter to include with the `read_ndjson` function along with their data types. The data types can be found by using the `DESCRIBE` function as used above, or through a method similar to the [one documented here](https://github.com/duckdb/duckdb/discussions/5272).
 
-## 
+Whether it's as the file is being read initially, or from a raw table loaded as is, it's most efficient to parse the JSON once and only once.
+
+## Download all snapshot files
 
 At this point, we'll download all the snapshot files and store them locally so we don't need to pull them from the s3 bucket. There's a few different ways to do this, but the [OpenAlex documentation](https://docs.openalex.org/download-all-data/download-to-your-machine) using the `aws cli` is probably simplest.
 
