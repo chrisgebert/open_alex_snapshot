@@ -3,7 +3,6 @@
 - [About This Project](#about-this-project)
 - [Exploratory Analysis](#exploratory-analysis)
 - [Loading Snapshot Files into a Local DuckDB Database](#loading-snapshot-files-into-a-local-duckdb-database)
-- [Develop Our Analysis](#develop-our-analysis)
 - [Using `dbt` and `dbt-duckdb`](#using-dbt-and-dbt-duck)
 - [Using MotherDuck](#using-motherduck)
 - [Next Steps](#next-steps)
@@ -99,15 +98,15 @@ We can see the parsed data fields and how DuckDB will infer the data types while
 
 ### Nested data fields
 
-This [snapshot documentation page](https://docs.openalex.org/download-all-data/upload-to-your-database) makes the distinction between loading data into a cloud data warehouse or to a relational database. When working with nested data structures in DuckDB, we can can choose to load the data as-is into the database and parse the JSON later. Or we can unnest the JSON as we're reading it to speed up later queries and improve efficiency.
+This [OpenAlex snapshot documentation page](https://docs.openalex.org/download-all-data/upload-to-your-database) makes the distinction between loading data into a cloud data warehouse or into a relational database. When working with nested data structures in DuckDB, we can can choose to load the data as-is into the database and parse the JSON later. Or we can unnest the JSON as we're reading it to speed up later queries and improve efficiency.
 
-To be as explicit as possible (and to reduce loading large amounts of `inverted_abstract_index` data), I've chosen to define `columns` as a parameter to include with the `read_ndjson` function along with their data types. The data types can be found by using the `DESCRIBE` function as used above, or through a method similar to the [one documented here](https://github.com/duckdb/duckdb/discussions/5272).
+To be as explicit as possible (as well as to avoid loading large amounts of `inverted_abstract_index` data specifically from the `works` snapshot files), I've chosen to define [`columns` as a parameter](/models/sources.yml#L14-L30) to include with the `read_ndjson` function along with the data types of those columns. The data types can be found by using the `DESCRIBE` function as used above, or through a method similar to the [one documented here](https://github.com/duckdb/duckdb/discussions/5272).
 
-Whether it's as the file is being read initially, or from a raw table loaded as is, it's most efficient to parse the JSON once and only once.
+Whether the data types are defined as the file is being read initially, or later from a raw table loaded into the database as is, it's most efficient to parse the JSON once and only once.
 
 ## Download all snapshot files
 
-At this point, we'll download all the snapshot files and store them locally so we don't need to pull them from the s3 bucket. There's a few different ways to do this, but the [OpenAlex documentation](https://docs.openalex.org/download-all-data/download-to-your-machine) using the `aws cli` is probably simplest.
+At this point, we can download all the snapshot files and store them locally so we don't need to pull them from the s3 bucket. There are a few different ways to do this, but the [OpenAlex documentation](https://docs.openalex.org/download-all-data/download-to-your-machine) using the `aws cli` is probably simplest for now.
 
 ```sh
 aws s3 ls --summarize --human-readable --no-sign-request --recursive "s3://openalex/data/authors/"
@@ -124,7 +123,7 @@ duckdb open_alex_authors.duckdb
 
 select count(*)
 from read_ndjson(
-  '~/open_alex_authors/data/authors/*/*.gz'
+  '~/open_alex_authors/february_2024/data/authors/*/*.gz'
 );
 ```
 
@@ -228,7 +227,7 @@ sources:
 
 ### Create models
 
-Once the sources are defined, we can use the [OpenAlex Postgres schema diagram](https://docs.openalex.org/download-all-data/upload-to-your-database/load-to-a-relational-database/postgres-schema-diagram) (with a few modifications) to detail the models that will be created in our `dbt` project. I've set up a few of these as incremental models relying on the `updated_date`, but I haven't seen a great reduction in processing as a result from snapshot to snapshot.
+Once the sources are defined, we can use the [OpenAlex Postgres schema diagram](https://docs.openalex.org/download-all-data/upload-to-your-database/load-to-a-relational-database/postgres-schema-diagram) (with a few modifications) to detail the models that will be created in our `dbt` project. I've set up a few of these as incremental models relying on the `updated_date`, but I haven't seen a great improvement in overall processing as a result from snapshot to snapshot.
 
 ### Create outputs
 
