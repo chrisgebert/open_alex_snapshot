@@ -241,7 +241,7 @@ At this point, we'll connect to a MotherDuck account and create the database the
 
 ```sql
 .open md:
-CREATE OR REPLACE DATABASE open_alex_authors FROM 'open_alex_authors.duckdb';
+CREATE OR REPLACE DATABASE open_alex_snapshot FROM 'open_alex_snapshot.duckdb';
 ```
 
 ### Add MotherDuck profile to dbt
@@ -249,19 +249,19 @@ CREATE OR REPLACE DATABASE open_alex_authors FROM 'open_alex_authors.duckdb';
 Or if only the snapshot table exists in MotherDuck, we can run our `dbt-duckdb` models against that source, by addng a MotherDuck target (i.e. the `prod` target) in the `profiles.yml` file.
 
 ```yaml
-open_alex_authors:
+open_alex_snapshot:
 
   target: dev
   outputs:
     dev:
       type: duckdb
-      path: 'open_alex_authors.duckdb'
+      path: 'open_alex_snapshot.duckdb'
       threads: 24
       extensions:
         - httpfs
     prod:
       type: duckdb
-      path: md:open_alex_authors
+      path: md:open_alex_snapshot
 ```
 
 ### Other options
@@ -275,7 +275,7 @@ I haven't tested that much and the [cold storage fees](https://motherduck.com/pr
 Once the database is created in MotherDuck, we can also choose to [share the database](https://motherduck.com/docs/key-tasks/managing-shared-motherduck-database/), including the base snapshot table and other models we created from it. 
 
 ```sql
-CREATE SHARE open_alex_authors_share FROM open_alex_authors
+CREATE SHARE open_alex_snapshot_share FROM open_alex_snapshot
 ```
 
 So, others can attach and [query the database share](https://motherduck.com/docs/key-tasks/querying-a-shared-motherduck-database).
@@ -289,6 +289,8 @@ ATTACH 'md:_share/open_alex_authors/5d0ef4a6-8f80-4c74-b821-08fda756ca2d'
 From here, since different disciplines are cited at different rates, it'd make sense to start parsing the `topics` fields to explore which authors and which institutions are most highly cited within a given [topic](https://docs.openalex.org/api-entities/topics) so we can begin to track how those within top percentages change over time from snapshot to snapshot.
 
 # Read More:
+
+
 
 [1]: https://www.leidenmadtrics.nl/articles/an-open-approach-for-classifying-research-publications "An open approach for classifying research publications"
 
