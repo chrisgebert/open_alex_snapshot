@@ -290,7 +290,21 @@ From here, since different disciplines are cited at different rates, it'd make s
 
 # Read More:
 
+1. [An open approach for classifying research publications][1]
 
+2. [Authenticating to MotherDuck][2]
+
+3. [MotherDuck + dbt: Better Together][3]
+
+4. [OpenAlex Snapshot Data Format][4]
+
+5. [Opening up the CWTS Leiden Ranking: Toward a decentralized and open model for data curation][5]
+
+6. [Shredding Deeply Nested JSON, One Vector at a Time][6]
+
+7. [Using MotherDuck with `dbt-duckdb`][7]
+
+8. [Wrangling JSON with DuckDB][8]
 
 [1]: https://www.leidenmadtrics.nl/articles/an-open-approach-for-classifying-research-publications "An open approach for classifying research publications"
 
