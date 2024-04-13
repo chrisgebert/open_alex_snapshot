@@ -163,7 +163,7 @@ from read_ndjson(
     updated_date: 'DATE',
     created_date: 'DATE',
     updated: 'VARCHAR'
-  }
+  },
   compression='gzip'
 );
 ```

@@ -1,12 +1,102 @@
-
 version: 2
 
 models:
   - name: authors
-    description: "author records"
+    description: "[Authors are people who create works.](https://help.openalex.org/how-it-works/authors)"
+
+    columns:
+      - name: author_id
+        description: Primary key
+      - name: orcid
+        description: 'None'
+      - name: display_name
+        description: 'None'
+      - name: display_name_alternatives
+        description: 'None'
+      - name: works_count
+        description: 'None'
+      - name: cited_by_count
+        description: 'None'
+      - name: institution_display_name
+        description: 'None'
+      - name: institution_country_code
+        description: 'None'
+      - name: works_api_url
+        description: 'None'
+      - name: updated_date
+        description: 'None'
 
   - name: author_ids
-    description: "author ids"
+    description: External IDs for each author.
 
   - name: authors_counts_by_year
-    description: "distinct number of authors from each year"
+    description: Total works count, total citation, total OA works for each author by year
+
+  - name: works
+    description: "[Scholarly documents like journal articles, conference papers, books and book chapters, datasets, and theses.](https://help.openalex.org/how-it-works/works)"
+
+  - name: works_authorship
+    description: An individual author and their institutional affiliation for a given work.
+
+  - name: works_biblio
+    description: Bibliographic metadata regarding a work's publication.
+
+  - name: works_ids
+    description: 'None'
+
+  - name: works_mesh
+    description: 'None'
+
+  - name: works_primary_location
+    description: 'None'
+
+  - name: works_referenced_works
+    description: 'None'
+
+  - name: works_related_works
+    description: 'None'
+
+  - name: works_topics
+    description: One or more topics that are assigned to a work using the works classification system.
+
+  - name: institutions
+    description: "[Universities and other organizations to which authors claim affiliations.](https://help.openalex.org/how-it-works/institutions)"
+
+  - name: institutions_ids
+    description: 'None'
+
+  - name: institutions_geo
+    description: 'None'
+
+  - name: institutions_associated_institutions
+    description: 'None'
+
+  - name: institutions_counts_by_year
+    description: 'None'
+
+  - name: publishers
+    description: "[Companies and organizations that distribute journal articles, books, and theses.](https://help.openalex.org/how-it-works/publishers)"
+
+  - name: sources
+    description: "[Where works are hosted, such as journals, book series, conferences, and repositories.](https://help.openalex.org/how-it-works/sources)"
+
+  - name: sources_ids
+    description: 'None'
+
+  - name: sources_counts_by_year
+    description: 'None'
+
+  - name: topics
+    description: "[The lowest level in the works classification system, which means it is the most granular.](https://help.openalex.org/how-it-works/topics)"
+
+  - name: fields
+    description: The second-highest level in the works classification system, which means it is the second-least granular.
+
+  - name: subfields
+    description: The third-highest level in the works classification system, which means it is the third-least granular.
+
+  - name: domains
+    description: The highest level in the works classification system, which means it is the least granular.
+
+  - name: funders
+    description: Organizations that fund research.

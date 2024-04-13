@@ -6,12 +6,12 @@ sources:
     schema: main
     description: "Latest OpenAlex data snapshot"
     meta:
-      external_location: read_ndjson_auto('./february_2024_snapshot/data/authors/updated_date=2023-07-*/*.gz')
+      external_location: read_ndjson_auto('./march_2024_snapshot/data/authors/updated_date=2023-07-*/*.gz')
     tables:
       - name: raw_authors
         meta:
           external_location: > 
-            read_ndjson('/Volumes/8TB 1/february_2024_snapshot/authors/*/*.gz',
+            read_ndjson('/Volumes/8TB 1/march_2024_snapshot/authors/*/*.gz',
             columns = {
               id: 'VARCHAR',
               orcid: 'VARCHAR',
@@ -31,17 +31,17 @@ sources:
           formatter: oldstyle
       - name: raw_concepts
         meta:
-          external_location: read_ndjson_auto('/Volumes/8TB 1/december_2023_snapshot/data/concepts/*/*.gz')
+          external_location: read_ndjson_auto('/Volumes/8TB 1/march_2023_snapshot/data/concepts/*/*.gz')
       - name: raw_domains
         meta:
-          external_location: read_ndjson_auto('/Volumes/8TB 1/february_2024_snapshot/domains/*/*.gz')
+          external_location: read_ndjson_auto('/Volumes/8TB 1/march_2024_snapshot/domains/*/*.gz')
       - name: raw_fields
         meta:
-          external_location: read_ndjson_auto('/Volumes/8TB 1/february_2024_snapshot/fields/*/*.gz')
+          external_location: read_ndjson_auto('/Volumes/8TB 1/march_2024_snapshot/fields/*/*.gz')
       - name: raw_funders
         meta:
           external_location: > 
-            read_ndjson('/Volumes/8TB 1/february_2024_snapshot/funders/*/*.gz',
+            read_ndjson('/Volumes/8TB 1/march_2024_snapshot/funders/*/*.gz',
             columns = {
             id: 'VARCHAR',
             display_name: 'VARCHAR',
@@ -59,7 +59,7 @@ sources:
       - name: raw_institutions
         meta:
           external_location: > 
-            read_ndjson('/Volumes/8TB 1/february_2024_snapshot/institutions/*/*.gz',
+            read_ndjson('/Volumes/8TB 1/march_2024_snapshot/institutions/*/*.gz',
             columns = {
             id: 'VARCHAR',
             ror: 'VARCHAR',
@@ -83,14 +83,14 @@ sources:
           formatter: oldstyle
       - name: raw_publishers
         meta:
-          external_location: read_ndjson_auto('/Volumes/8TB 1/february_2024_snapshot/publishers/*/*.gz')
+          external_location: read_ndjson_auto('/Volumes/8TB 1/march_2024_snapshot/publishers/*/*.gz')
       - name: raw_sources
         meta:
-          external_location: read_ndjson_auto('/Volumes/8TB 1/february_2024_snapshot/sources/*/*.gz')
+          external_location: read_ndjson_auto('/Volumes/8TB 1/march_2024_snapshot/sources/*/*.gz')
       - name: raw_subfields
         meta:
           external_location: > 
-            read_ndjson('/Volumes/8TB 1/february_2024_snapshot/subfields/*/*.gz',
+            read_ndjson('/Volumes/8TB 1/march_2024_snapshot/subfields/*/*.gz',
             columns = {
               id: 'VARCHAR',
               display_name: 'VARCHAR',
@@ -109,7 +109,7 @@ sources:
       - name: raw_topics
         meta:
           external_location: > 
-            read_ndjson('/Volumes/8TB 1/february_2024_snapshot/topics/*/*.gz',
+            read_ndjson('/Volumes/8TB 1/march_2024_snapshot/topics/*/*.gz',
             columns = {
               id: 'VARCHAR',
               display_name: 'VARCHAR',
@@ -127,7 +127,7 @@ sources:
       - name: raw_works
         meta:
           external_location: > 
-            read_ndjson('/Volumes/8TB 1/february_2024_snapshot/works/*/*.gz',
+            read_ndjson('/Volumes/8TB 1/march_2024_snapshot/works/*/*.gz',
             columns = {
               id: 'VARCHAR',
               doi: 'VARCHAR',
@@ -151,5 +151,6 @@ sources:
               updated_date: 'DATE',
               topics: 'STRUCT(id VARCHAR, display_name VARCHAR, score DOUBLE)[]',
               primary_topic: 'STRUCT(id VARCHAR, display_name VARCHAR, score DOUBLE)'
-            })
+            },
+            maximum_object_size = 20000000)
           formatter: oldstyle

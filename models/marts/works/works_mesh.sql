@@ -6,8 +6,8 @@
 
 with unnest_works_mesh as (
     select
-        work_id,
-        unnest(mesh_structure) as unnest
+        id as work_id,
+        unnest(mesh) as unnest
 	from {{ source('open_alex_snapshot', 'raw_works') }}
 )
 

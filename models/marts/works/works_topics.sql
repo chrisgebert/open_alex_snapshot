@@ -7,7 +7,7 @@
 
 with unnest_works_topics as (
     select
-        work_id,
+        id as work_id,
         unnest(topics) as unnested,
         updated_date
     from {{ source('open_alex_snapshot', 'raw_works') }}
